@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task Manager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><h1>Task Manager</h1></header>
+  <main>
+    <section aria-label="任務管理">
+      <form id="task-form">
+        <label for="task-name">新增任務：</label>
+        <input id="task-name" type="text" placeholder="任務名稱" autocomplete="off">
+        <button type="submit">新增</button>
+      </form>
+      <section aria-label="篩選任務">
+        <h2>篩選</h2>
+        <button type="button" class="filter-button active" data-filter="all">全部</button>
+        <button type="button" class="filter-button" data-filter="active">未完成</button>
+        <button type="button" class="filter-button" data-filter="completed">已完成</button>
+      </section>
+      <section aria-label="任務清單">
+        <ul id="task-list"></ul>
+      </section>
+      <footer aria-live="polite">
+        共 <span id="total-count">0</span> 項　未完成 <span id="active-count">0</span> 項　已完成 <span id="completed-count">0</span> 項
+      </footer>
+      <p id="message" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+  <script>
+    const tasks = [
+      { id: 1, name: '完成 Web App 實作', completed: false },
+      { id: 2, name: '完成 JavaScript 練習', completed: false },
+      { id: 3, name: '完成課程作業', completed: true }
+    ];
+    let currentFilter = 'all';
+    let nextId = 4;
+    const form = document.querySelector('#task-form');
+    const input = document.querySelector('#task-name');
+    const list = document.querySelector('#task-list');
+    const message = document.querySelector('#message');
+    function renderTasks() {
+      const visibleTasks = tasks.filter(task => currentFilter === 'all' || (currentFilter === 'active' && !task.completed) || (currentFilter === 'completed' && task.completed));
+      list.replaceChildren();
+      visibleTasks.forEach(task => {
+        const item = document.createElement('li');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = task.completed;
+        checkbox.setAttribute('aria-label', task.name + '：完成');
+        checkbox.addEventListener('change', () => { task.completed = checkbox.checked; message.textContent = ''; renderTasks(); });
+        const label = document.createElement('span');
+        label.textContent = task.name;
+        if (task.completed) label.classList.add('completed');
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'delete-button';
+        removeButton.textContent = '刪除';
+        removeButton.addEventListener('click', () => { const index = tasks.findIndex(item => item.id === task.id); if (index !== -1) tasks.splice(index, 1); renderTasks(); });
+        item.append(checkbox, label, removeButton);
+        if (task.completed) { const status = document.createElement('span'); status.textContent = '（已完成）'; item.append(status); }
+        list.append(item);
+      });
+      const completed = tasks.filter(task => task.completed).length;
+      document.querySelector('#total-count').textContent = tasks.length;
+      document.querySelector('#active-count').textContent = tasks.length - completed;
+      document.querySelector('#completed-count').textContent = completed;
+    }
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const name = input.value.trim();
+      if (!name) { message.textContent = '未輸入內容'; input.focus(); return; }
+      tasks.push({ id: nextId++, name, completed: false });
+      input.value = ''; message.textContent = ''; currentFilter = 'all';
+      document.querySelectorAll('.filter-button').forEach(button => button.classList.toggle('active', button.dataset.filter === 'all'));
+      renderTasks(); input.focus();
+    });
+    document.querySelectorAll('.filter-button').forEach(button => {
+      button.addEventListener('click', () => { currentFilter = button.dataset.filter; message.textContent = ''; document.querySelectorAll('.filter-button').forEach(item => item.classList.toggle('active', item === button)); renderTasks(); });
+    });
+    renderTasks();
+  </script>
+</body>
+</html>

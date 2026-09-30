@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task Manager - Vue</title>
+  <style>
+    body { max-width: 640px; margin: 32px auto; padding: 0 16px; color: #000; background: #fff; font: 16px Arial, sans-serif; }
+    form, li { display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+    input[type="text"] { flex: 1; min-width: 0; padding: 8px; }
+    button { padding: 8px 12px; background: #fff; color: #000; border: 1px solid #000; cursor: pointer; }
+    button:hover, button:focus { background: #0645d8; color: #fff; }
+    ul { padding-left: 0; list-style: none; }
+    li span { flex: 1; }
+    li.done span { text-decoration: line-through; }
+    @media (max-width: 480px) { body { margin: 16px auto; } }
+  </style>
+</head>
+<body>
+  <header><h1>Task Manager（Vue）</h1></header>
+  <main id="app">
+    <section aria-label="新增任務">
+      <form @submit.prevent="addTask">
+        <label for="task-name">新增任務：</label>
+        <input id="task-name" v-model="newTaskName" type="text" placeholder="任務名稱">
+        <button type="submit">新增</button>
+      </form>
+      <p role="status">{{ message }}</p>
+    </section>
+    <section aria-label="任務清單">
+      <ul>
+        <li v-for="task in tasks" :key="task.id" :class="{ done: task.completed }">
+          <input :id="'task-' + task.id" v-model="task.completed" type="checkbox" :aria-label="'完成 ' + task.name">
+          <span>{{ task.name }}</span>
+          <button type="button" @click="deleteTask(task.id)">刪除</button>
+        </li>
+      </ul>
+      <p>共 {{ tasks.length }} 項　未完成 {{ activeCount }} 項　已完成 {{ completedCount }} 項</p>
+    </section>
+  </main>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() {
+        return {
+          newTaskName: '',
+          message: '',
+          nextId: 4,
+          tasks: [
+            { id: 1, name: '完成 Web App 實作', completed: false },
+            { id: 2, name: '完成 JavaScript 練習', completed: false },
+            { id: 3, name: '完成課程作業', completed: true }
+          ]
+        };
+      },
+      computed: {
+        activeCount() { return this.tasks.filter(task => !task.completed).length; },
+        completedCount() { return this.tasks.filter(task => task.completed).length; }
+      },
+      methods: {
+        addTask() {
+          const name = this.newTaskName.trim();
+          if (!name) {
+            this.message = '未輸入內容';
+            return;
+          }
+          this.tasks.push({ id: this.nextId++, name, completed: false });
+          this.newTaskName = '';
+          this.message = '';
+        },
+        deleteTask(id) {
+          this.tasks = this.tasks.filter(task => task.id !== id);
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
